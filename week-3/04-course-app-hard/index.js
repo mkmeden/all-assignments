@@ -39,7 +39,7 @@ const user = mongoose.model('user', userSchema)
 const course = mongoose.model('course', courseSchema)
 
 
-mongoose.connect('mongodb+srv://mkmeden:2P1XK9CvO4nMBkYP@cluster0.c0sfhfw.mongodb.net/courses', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('{MONGOOSE_URI}/courses', { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 
