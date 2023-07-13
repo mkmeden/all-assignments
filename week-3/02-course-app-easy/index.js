@@ -11,56 +11,106 @@ let USERS = [];
 let COURSES = [];
 
 // Admin routes
+
+const adminauthentication = (req, res ,next)=>{
+
+  username = req.headers.username
+  password = req.headers.password
+
+  fs.readFile('week-3/02-course-app-easy/admin.json' , 'utf8' , (err , data)=>{
+
+    ADMINS = JSON.parse(data)
+console.log(ADMINS)
+    check = ADMINS.find((x) => x.username === username && x.password === password)
+
+    if(check)
+    {
+      next()
+    }
+
+    else
+    {
+      res.status(403).json({ message: 'Admin authentication failed' });
+    }
+
+  })
+}
+
+const userauthentication = (req, res ,next)=>{
+
+  username = req.headers.username
+  password = req.headers.password
+
+  fs.readFile('week-3/02-course-app-easy/users.json' , 'utf8' , (err , data)=>{
+
+    USERS = JSON.parse(data)
+
+    check = USERS.find((x) => x.username === username && x.password === password)
+
+    if(check)
+    {
+      next()
+    }
+
+    else
+    {
+      res.status(403).json({ message: 'User authentication failed' });
+    }
+
+  })
+}
+
+
 app.post('/admin/signup', (req, res) => {
   // logic to sign up admin
   username = req.headers.username
   password = req.headers.password
 
-  fs.readFile('admin.json', 'utf8', (err, data) => {
+  console.log(username , password)
+
+  fs.readFile('week-3/02-course-app-easy/admin.json', 'utf8', (err, data) => {
 
     ADMINS = JSON.parse(data)
+    console.log(ADMINS)
     admin_id = Math.floor(Math.random() * 10000)
 
-    ADMINS.push({ admin_id: admin_id, username: username, password: password })
+    check = ADMINS.find((x)=> x.username === username && x.password === password)
 
-    fs.writeFile('admin.json', JSON.stringify(ADMINS), (err) => {
-      if (err)
-        res.status(404).send()
+    if(check)
+    res.status(403).json({ message: 'Admin already exists' });
 
-      else
-        res.send('Admin created successfully')
-    })
-  })
-
-
-});
-
-app.post('/admin/login', (req, res) => {
-  // logic to log in admin
-  username = req.headers.username
-  password = req.headers.password
-
-  fs.readFile('admin.json', 'utf8', (err, data) => {
-
-    ADMINS = JSON.parse(data)
-
-    let found = ADMINS.find(element => element.username === username && element.password === password)
-
-    if (found)
-      res.send('Logged in successfully')
 
     else
-      res.status(404).send()
+    {
+      ADMINS.push({ admin_id: admin_id, username: username, password: password })
+      console.log(ADMINS)
+
+      fs.writeFile('week-3/02-course-app-easy/admin.json', JSON.stringify(ADMINS), (err) => {
+        if (err)
+          res.status(404).send()
+  
+        else
+        res.json({ message: 'Admin created successfully' });
+
+      })
+    }
 
   })
 
+
 });
 
-app.post('/admin/courses', (req, res) => {
+app.post('/admin/login', adminauthentication ,(req, res) => {
+  // logic to log in admin
+  
+  res.json({ message: 'Logged in successfully' });
+
+
+});
+
+app.post('/admin/courses',adminauthentication ,(req, res) => {
   // logic to create a course
 
-  let username = req.headers.username
-  let password = req.headers.password
   let title = req.body.title
   let description = req.body.description
   let price = req.body.price
@@ -69,59 +119,45 @@ app.post('/admin/courses', (req, res) => {
 
   let courseID = Math.floor(Math.random() * 10000)
 
-  fs.readFile('admin.json', 'utf8', (err, data) => {
+fs.readFile('week-3/02-course-app-easy/admin.json', 'utf8' , (err , data) => {
 
-    ADMINS = JSON.parse(data)
+  ADMINS = JSON.parse(data)
+  found = ADMINS.find((x)=>x.username === req.headers.username && x.password === req.headers.password)
 
-    let found = ADMINS.find(element => element.username === username && element.password === password)
 
-    if (found) {
-      fs.readFile('courses.json', 'utf8', (err, data) => {
 
-        COURSES = JSON.parse(data)
-        COURSES.push({
-          admin_id: found.admin_id, courseID: courseID, title: title,
-          description: description, price: price, imageLink: imageLink, published: published
-        })
+  fs.readFile('week-3/02-course-app-easy/courses.json', 'utf8', (err, data) => {
 
-        fs.writeFile('courses.json', JSON.stringify(COURSES), (err) => {
-          if (err)
-            res.status(404).send()
+    COURSES = JSON.parse(data)
+    COURSES.push({
+      admin_id: found.admin_id, courseID: courseID, title: title,
+      description: description, price: price, imageLink: imageLink, published: published
+    })
 
-          else
-            res.send(`Course created successfully courseID : ${courseID}`)
-        })
-      })
+    fs.writeFile('week-3/02-course-app-easy/courses.json', JSON.stringify(COURSES), (err) => {
+      if (err)
+        res.status(404).send()
 
-    }
+      else
+      res.json({ message: 'Course created successfully', courseId: courseID });
 
-    else
-      res.status(404).send()
+    })
+  })
+
+})
+     
 
   })
 
 
 
-
-});
-
-
-app.put('/admin/courses/:courseId', (req, res) => {
+app.put('/admin/courses/:courseId',adminauthentication ,(req, res) => {
   // logic to edit a course
 
   let courseID = Number(req.params.courseId)
   console.log(courseID)
-  let username = req.headers.username
-  let password = req.headers.password
 
-  fs.readFile('admin.json', 'utf8', (err, data) => {
-
-    ADMINS = JSON.parse(data)
-
-    let found = ADMINS.find(element => element.username === username && element.password === password)
-
-    if (found) {
-      fs.readFile('courses.json', 'utf8', (err, data) => {
+      fs.readFile('week-3/02-course-app-easy/courses.json', 'utf8', (err, data) => {
 
         COURSES = JSON.parse(data)
 
@@ -141,39 +177,33 @@ app.put('/admin/courses/:courseId', (req, res) => {
           COURSES[index].imageLink = req.body.imageLink
           COURSES[index].published = req.body.published
 
-          fs.writeFile('courses.json', JSON.stringify(COURSES), (err) => {
+          fs.writeFile('week-3/02-course-app-easy/courses.json', JSON.stringify(COURSES), (err) => {
 
             if (err)
               res.status(404).send('writing error')
 
             else
-              res.send('Course updated successfully')
+            res.json({ message: 'Course updated successfully' });
           })
         }
 
         else
-          res.status(404).send('course not found')
+        res.status(404).json({ message: 'Course not found' });
 
       })
-
-    }
-
-    else
-      res.status(404).send('authentication error')
-
-  })
 
 
 });
 
-app.get('/admin/courses', (req, res) => {
+app.get('/admin/courses', adminauthentication,(req, res) => {
   // logic to get all courses
 
-  fs.readFile('admin.json', 'utf8', (err, data) => {
+  fs.readFile('week-3/02-course-app-easy/admin.json', 'utf8', (err, data) => {
 
     COURSES = JSON.parse(data)
 
-    res.send(COURSES)
+    res.json({ courses: COURSES });
+
   })
 });
 
@@ -185,82 +215,67 @@ app.post('/users/signup', (req, res) => {
   let password = req.headers.password
 
 
-  fs.readFile('users.json', 'utf8', (err, data) => {
+  fs.readFile('week-3/02-course-app-easy/users.json', 'utf8', (err, data) => {
 
     USERS = JSON.parse(data)
     user_id = Math.floor(Math.random() * 10000)
 
-    USERS.push({ user_id: user_id, username: username, password: password , purchasedCourses :[]})
+    check = USERS.find((x)=> x.username ===username && x.password===password)
 
-    fs.writeFile('users.json', JSON.stringify(USERS), (err) => {
-      if (err)
-        res.status(404).send()
-
-      else
-        res.send('User created successfully')
-    })
-  })
-
-
-});
-
-app.post('/users/login', (req, res) => {
-  // logic to log in user
-
-  username = req.headers.username
-  password = req.headers.password
-
-  fs.readFile('users.json', 'utf8', (err, data) => {
-
-    USERS = JSON.parse(data)
-
-    let found = USERS.find(element => element.username === username && element.password === password)
-
-    if (found)
-      res.send('Logged in successfully')
+    if(check)
+    res.status(403).json({ message: 'User already exists' });
 
     else
-      res.status(404).send()
+    {
+      USERS.push({ user_id: user_id, username: username, password: password , purchasedCourses :[]})
+
+      fs.writeFile('week-3/02-course-app-easy/users.json', JSON.stringify(USERS), (err) => {
+        if (err)
+          res.status(404).send()
+  
+        else
+        res.json({ message: 'User created successfully' });
+  
+      })
+
+    }
+
 
   })
+
+
 });
 
-app.get('/users/courses', (req, res) => {
+app.post('/users/login', userauthentication,(req, res) => {
+  // logic to log in user
+  res.json({ message: 'Logged in successfully' });
+
+});
+
+app.get('/users/courses', userauthentication,(req, res) => {
   // logic to list all courses
 
-  username = req.headers.username
-  password = req.headers.password
-
-  fs.readFile('users.json', 'utf8', (err, data) => {
+  fs.readFile('week-3/02-course-app-easy/users.json', 'utf8', (err, data) => {
 
     USERS = JSON.parse(data)
 
-    let found = USERS.find(element => element.username === username && element.password === password)
-
-    if (found)
-      {
-        fs.readFile('courses.json', 'utf8', (err, data) => {
+        fs.readFile('week-3/02-course-app-easy/courses.json', 'utf8', (err, data) => {
 
           COURSES = JSON.parse(data)
       
           res.send({courses:COURSES})
         })
-      }
-
-    else
-      res.status(404).send()
-
   })
 });
 
-app.post('/users/courses/:courseId', (req, res) => {
+app.post('/users/courses/:courseId', userauthentication,(req, res) => {
   // logic to purchase a course
 
   let username = req.headers.username
   let password = req.headers.password
   let courseID = req.params.courseId
 
-  fs.readFile('users.json', 'utf8', (err, data) => {
+  fs.readFile('week-3/02-course-app-easy/users.json', 'utf8', (err, data) => {
 
     USERS = JSON.parse(data)
 
@@ -275,36 +290,30 @@ app.post('/users/courses/:courseId', (req, res) => {
       }
     }
 
-
-
-    if (index!==-1)
-      {
         USERS[index].purchasedCourses.push(courseID)
 
-        fs.writeFile('users.json' , JSON.stringify(USERS) , (err)=>{
+        fs.writeFile('week-3/02-course-app-easy/users.json' , JSON.stringify(USERS) , (err)=>{
 
           if(err)
-          res.status(404).send()
+          res.status(404).send('reading error')
 
           else
-          res.send('Course purchased successfully')
+          res.json({ message: 'Course purchased successfully' });
+
         })
 
-      }
 
-    else
-      res.status(404).send('authentication failed')
 
   })
 });
 
-app.get('/users/purchasedCourses', (req, res) => {
+app.get('/users/purchasedCourses', userauthentication,(req, res) => {
   // logic to view purchased courses
 
   username = req.headers.username
   password = req.headers.password
 
-  fs.readFile('users.json', 'utf8', (err, data) => {
+  fs.readFile('week-3/02-course-app-easy/users.json', 'utf8', (err, data) => {
 
     USERS = JSON.parse(data)
 
